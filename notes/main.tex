@@ -1,0 +1,104 @@
+%% ----------------------------------------------
+%% |           DOCUMENT AND PACKAGES            |
+%% ----------------------------------------------
+\documentclass[%
+ draft,
+ aapm,
+ mph,%
+ amsmath,amssymb,
+%preprint,%
+ reprint,%
+%author-year,%
+%author-numerical,%
+]{revtex4-2}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{upgreek}
+
+\usepackage{siunitx}
+\usepackage{nicefrac}
+
+\begin{document}
+
+
+%% ----------------------------------------------
+%% |            TITLE, AUTHOR, DATE             |
+%% ----------------------------------------------
+\title{Selecting municipalities — a bit of algebra}
+\author{Philipp C. Verpoort}
+\date{\today}
+
+
+%% ----------------------------------------------
+%% |                OWN COMMANDS                |
+%% ----------------------------------------------
+\newcommand{\secref}[2][]{Sec.~\ref{sec:#2}#1}
+\newcommand{\figref}[2][]{Fig.~\ref{fig:#2}#1}
+\newcommand{\tabref}[2][]{Tab.~\ref{tab:#2}#1}
+\newcommand{\eqnref}[2][]{Eq.~(\ref{eq:#2}#1)}
+\newcommand{\subfig}[1]{{\bf(#1)}}
+
+\newcommand{\Ltot}{L_{\mathrm{tot}}}
+\newcommand{\Ttot}{T_{\mathrm{tot}}}
+\newcommand{\Mtot}{M_{\mathrm{tot}}}
+\newcommand{\Ntot}{N_{\mathrm{tot}}}
+
+\newcommand{\arr}[2]{\begin{array}{#1}#2\end{array}}
+
+\newcommand{\punc}{\,}
+
+
+%% ----------------------------------------------
+%% |           BEGINNING OF DOCUMENT            |
+%% ----------------------------------------------
+\maketitle
+
+\section{Defining the problem}
+We want to send out $\Ltot = \num{20 000}$ letters fairly to individuals in Germany. We have to select individual municipalities from the full list of all of $\Mtot \approx \num{15 000}$ municipalities in Germany. Our total target municipalities to select, $\Ttot$,  should be in the range of 80 and 100. The total number of people living in Germany is $\Ntot \approx \num{80E+6}$.
+
+The aim is to ensure every individual has the same chance of receiving a letter. At the same time, we want to match certain quotas for the municipalities we select.
+
+The probability $q_m$ of all individuals living in municipality $m$ is the same, and it is given by the number of letters send to that municipality $L_m$, the population of that municipality $N_m$, and the chance of the municipality itself being selected in the first place $p_m$:
+\begin{equation}
+    q_m \quad = \quad p_m ~~ \times ~~ \frac{L_m}{N_m} \punc.
+\end{equation}
+
+Moreover, we will have municipalities belonging to different groups $g$ (based on their size and the federal state they are in). There will be quota targets $T_g$ for the number of municipalities to select from each group $g$.
+
+
+\section{Easy way: no quotas}
+The easy way would be to just randomly select municipalities $\Ttot$ weighted by their population $\nicefrac{N_m}{\Ntot}$ (while allowing duplicates) and sending $L_m = \nicefrac{\Ltot}{\Ttot} \approx 250$ letters. The chance of municipality $m$ being selected is then $p_m = \Ttot \times \nicefrac{N_m}{\Ntot}$ and the chance of an individual living in $m$ receiving a letter is
+\begin{align}
+    q_m \quad
+    &=  \quad \Ttot \times \frac{N_m}{\Ntot} \times \frac{\Ltot}{\Ttot \times N_m} \nonumber\\
+    &=  \quad \frac{\Ltot}{\Ntot} \approx \frac{1}{4000} = 0.00025 \punc.
+\end{align}
+How nice. Everybody has the same chance. Note that we assume that when a municipality $m$ gets chosen multiple times, they will also send out that many times $L_m$ letters. So if Berlin is selected 4 times, they will send out $4 \times L_k \approx 1000$ letters. The problem is that we can't have quotas.
+
+
+\section{Hard to understand/get it to work: imposing quotas in retrospect}
+We can try to impose them retrospectively by only selecting municipalities until we match the quotas, i.e. stop selecting further municipalities once the quota $T_g$ for group $g$ have been reached. Problem: we don't really know what that does to the chance of being selected.
+
+
+\section{Imposing quotas first, then selecting randomly}
+This time, we select exactly $T_g$ municipalities from group $g$ with weighted probability of selection of $\nicefrac{N_m}{N_g}$, where $N_g = \sum_{m\in g} N_m$ is the population in group $g$. Then the chance of municipality $m$ being selected is $p_m = T_g \times \nicefrac{N_m}{N_g}$ and the chance of an individual living in $m$ receiving a letter is
+\begin{align}
+    q_m \quad
+    &=  \quad T_g \times \frac{N_m}{N_g} \times \frac{L_m}{N_m} \\
+    &=  \quad T_g \times \frac{L_m}{N_g} \punc.
+\end{align}
+
+We want to choose $L_m$ such that $q_m$ is the same for every individual, i.e. equal to $\nicefrac{\Ltot}{\Ntot}$. Therefore, we impose the condition
+\begin{align}
+    &\frac{\Ltot}{\Ntot} = q_m = T_g \times \frac{L_m}{N_g} \\
+    \implies &L_m = \frac{\Ltot}{\Ttot} \times \frac{\Ttot}{T_g} \times \frac{N_g}{\Ntot} \punc.
+\end{align}
+The first fraction is the same as in the case above ($\frac{\Ltot}{\Ttot} \approx 250$). The remaining factors is a correction term that accounts for the rounding errors introduced. In the limit of $\Ttot \rightarrow \infty$ we expected $\frac{T_g}{\Ttot} \rightarrow \frac{N_g}{\Ntot}$, and so the correction term converges to 1. Note that the correction factor diverges to $+\infty$ for $T_g \rightarrow 0$.
+
+
+
+\end{document}
