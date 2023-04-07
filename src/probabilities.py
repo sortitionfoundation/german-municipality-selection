@@ -6,6 +6,9 @@ from src.caching import writeCache
 from src.choose import chooseMuns
 
 
+Kbatch = 10000
+
+
 def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsMuns:pd.DataFrame, params: dict, Ks: List[int]):
     # check input parameters
     if any(Ks[i] <= Ks[i-1] for i in range(1,len(Ks))):
@@ -16,19 +19,24 @@ def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsM
     probs['Hist'] = 0
 
     # loop over iterations
-    Ktot = 0
+    Klast = 0
     for i, K in enumerate(Ks):
-        # choose K times
-        choices = chooseMuns(muns, groups, K-Ktot)
+        print(K)
+        # choose K-Ktot times
+        Kchoose = K-Klast
+        while Kchoose > 0:
+            print(f"-- {min(Kchoose, Kbatch)}")
+            choices = chooseMuns(muns, groups, min(Kchoose, Kbatch))
+            Kchoose -= Kbatch
+
+            # add number of times chosen to histogram
+            probs['Hist'] += pd.Series(choices).value_counts()
 
         # add K to total number of times chosen
-        Ktot = K
-
-        # add number of times chosen to histogram
-        probs['Hist'] += pd.Series(choices).value_counts()
+        Klast = K
 
         # calculate probabilitiy after iteration
-        probs[K] = params['Ltot'] / params['Ttot'] / muns['Nm'] * probs['Hist'] / Ktot
+        probs[K] = params['Ltot'] / params['Ttot'] / muns['Nm'] * probs['Hist'] / Klast
 
     probs = probs \
         .reset_index() \
