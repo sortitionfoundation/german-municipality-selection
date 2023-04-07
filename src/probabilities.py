@@ -2,34 +2,40 @@ from typing import List
 
 import pandas as pd
 
-from src.select import selectMuns
+from src.caching import writeCache
+from src.choose import chooseMuns
 
 
-def determineProbabilities(muns: pd.DataFrame, targetsAdjusted: pd.DataFrame, Ns: List[int]):
-    ret = None
+def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsMuns:pd.DataFrame, params: dict, Ks: List[int]):
+    # check input parameters
+    if any(Ks[i] <= Ks[i-1] for i in range(1,len(Ks))):
+        raise Exception(f"The list of iterations has to be strictly increasing.")
 
-    # initialise hits dict
-    muns['Hist'] = 0
+    # initialise histogram
+    probs = corrFactorsMuns.copy().filter(['CFm'])
+    probs['Hist'] = 0
 
     # loop over iterations
-    Ntot = 0
-    for i, N in enumerate(Ns):
-        selected = selectMuns(muns, targetsAdjusted, N)
-        Ntot += N
+    Ktot = 0
+    for i, K in enumerate(Ks):
+        # choose K times
+        choices = chooseMuns(muns, groups, K-Ktot)
 
-        for munID in selected:
-            muns.loc[munID, 'Hist'] += 1
+        # add K to total number of times chosen
+        Ktot = K
 
-        # add to dataframe returned
-        muns['FinalProb'] = muns['Letters'] * muns['Hist'] / Ntot
-        muns['FinalProbWOCorr'] = muns['LettersWOCorr'] * muns['Hist'] / Ntot
+        # add number of times chosen to histogram
+        probs['Hist'] += pd.Series(choices).value_counts()
 
-        # append round
-        append = muns.query(f"Population!=0")[['FinalProb', 'FinalProbWOCorr']].copy()
-        append['Round'] = i
-        if ret is None:
-            ret = append
-        else:
-            ret = pd.concat([ret, append])
+        # calculate probabilitiy after iteration
+        probs[K] = params['Ltot'] / params['Ttot'] / muns['Nm'] * probs['Hist'] / Ktot
 
-    return ret
+    probs = probs \
+        .reset_index() \
+        .drop(columns=['Hist', 'CFm']) \
+        .melt(id_vars='MunID', var_name='Iteration', value_name='Prob')
+
+    # write to cache
+    writeCache('Probs', probs)
+
+    return probs

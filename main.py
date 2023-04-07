@@ -1,52 +1,45 @@
 #!/usr/bin/env python3
-from src.adjust import adjustTargets
-from src.letters import determineNumbLetters
-from src.load import loadMuns
-from src.monitor import monitorSelected
-from src.path import pwd
+from src.corr_factors import calcCorrFactors
+from src.export import exportResults
+from src.read import readData
+from src.path import wd
 from src.plot import plotLine
 from src.probabilities import determineProbabilities
-from src.select import selectMuns
-from src.stats import getStats
+from src.choose import chooseMuns
+from src.groups import getGroups
 
 
 # calling 'run' will load the database, generate the statistics, and perform the selection
 def run():
-    Ti = 80 # initial target for number of municipalities to select
-    L = 20000 # number of letters to send out
-
     # load municipalities data
-    muns = loadMuns()
-    Ptot = muns['Population'].sum()
+    states, muns = readData()
+    print(states)
 
-    # generate statistics
-    stats = getStats(muns, Ti)
-    targetsInitial = stats['targets']
-    print(targetsInitial)
+    # initialise key parameters
+    params = {
+        'Ttot_init': 80, # initial target for number of municipalities to select
+        'Ltot': 20000, # total number of letters to send out
+        'Ntot': muns['Nm'].sum(), # total population in Germany
+    }
 
-    # adjust target numbers
-    targetsAdjusted, T = adjustTargets(targetsInitial, muns)
-    print(T)
+    # get groups and targets
+    groups = getGroups(states, muns, params)
 
-    # determine number of letters
-    determineNumbLetters(T, L, targetsAdjusted, muns)
+    # determine correction factors
+    corrFactorsMuns = calcCorrFactors(groups, muns, params)
 
     # select municipalities once
-    selected = selectMuns(muns, targetsAdjusted)
+    choices = chooseMuns(muns, groups)
 
-    # generate monitoring output
-    monitor = monitorSelected(muns, selected)
-    print(monitor)
+    # export results (targets, selection, and stats) to a spreadsheet
+    exportResults(muns, groups, corrFactorsMuns, choices, params)
 
     # determine probability of selection for each municipality
-    Ns = [100, 1000]
-    probabilities = determineProbabilities(muns, targetsAdjusted, Ns)
-    pathProbsCached = pwd / 'cachedProbs.pkl'
-    probabilities.to_pickle(pathProbsCached)
-    print(probabilities)
+    Ks = [20000, 50000, 200000]
+    probs = determineProbabilities(muns, groups, corrFactorsMuns, params, Ks)
 
     # plot line of probabilities
-    plotLine(probabilities, L, Ptot)
+    plotLine(probs, params)
 
 
 # calling main function

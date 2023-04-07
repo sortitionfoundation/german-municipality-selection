@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import pandas as pd
 
-from src.load import loadMuns
-from src.path import pwd
+from src.read import readData
+from src.path import wd
 from src.plot import plotLine
 
 
@@ -11,11 +11,11 @@ def run():
     L = 20000
 
     # load municipalities data
-    muns = loadMuns()
+    muns = readData()
     Ptot = muns['Population'].sum()
 
     # load probabilities
-    pathProbsCached = pwd / 'cachedProbs.pkl'
+    pathProbsCached = wd / 'cachedProbs.pkl'
     probabilities = pd.read_pickle(pathProbsCached)
 
     # plot line of probabilities

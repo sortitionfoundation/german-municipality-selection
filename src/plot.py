@@ -1,22 +1,14 @@
 import pandas as pd
 import plotly.express as px
 
-from src.path import pwd
+from src.path import wd
 
 
-def plotLine(probabilities: pd.DataFrame, L: int, popTot: int):
+def plotLine(probs: pd.DataFrame, params: dict):
     # plot line without normalisation
-    plot = px.line(probabilities.reset_index(), x='MunID', y='FinalProb', color='Round')
-    plot.add_hline(L / popTot)
+    plot = px.line(probs, x='MunID', y='Prob', color='Iteration')
+    plot.add_hline(params['Ltot'] / params['Ntot'])
 
-    # write figs to files
-    plot.write_image(pwd / 'output' / 'plot.png')
-
-    # plot line without normalisation
-    plot = px.line(probabilities.reset_index(), x='MunID', y='FinalProbWOCorr', color='Round')
-    plot.add_hline(L / popTot)
-
-    # write figs to files
-    plot.write_image(pwd / 'output' / 'plotWOCorr.png')
-
+    # write fig to files
+    plot.write_image(wd / 'output' / 'plot.png')
 
