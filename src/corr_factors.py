@@ -8,8 +8,10 @@ def calcCorrFactors(groups: pd.DataFrame, muns: pd.DataFrame, params: dict):
         .filter(['CFm'])
 
     # assign correction factors to municipalities
-    corrFactorsMuns = muns.filter(['MunName', 'StateID', 'ClassID']) \
-        .merge(corrFactorsGroups, on=['StateID', 'ClassID'])
-    corrFactorsMuns.index.set_names('MunID', inplace=True)
+    corrFactorsMuns = muns.filter(['MunName', 'StateID', 'ClassID', 'Nm']) \
+        .reset_index() \
+        .merge(corrFactorsGroups, on=['StateID', 'ClassID']) \
+        .sort_values(by='MunID') \
+        .set_index('MunID')
 
     return corrFactorsMuns

@@ -11,4 +11,3 @@ def plotLine(probs: pd.DataFrame, params: dict):
 
     # write fig to files
     plot.write_image(wd / 'output' / 'plot.png')
-

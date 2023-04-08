@@ -17,6 +17,7 @@ def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsM
     # initialise histogram
     probs = corrFactorsMuns.copy().filter(['CFm'])
     probs['Hist'] = 0
+    probs['Hist'] = probs['Hist'].astype(int)
 
     # loop over iterations
     Klast = 0
@@ -30,13 +31,14 @@ def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsM
             Kchoose -= Kbatch
 
             # add number of times chosen to histogram
-            probs['Hist'] += pd.Series(choices).value_counts()
+            add = pd.Series(choices).value_counts()
+            probs.loc[add.index.values, 'Hist'] += add.values
 
         # add K to total number of times chosen
         Klast = K
 
         # calculate probabilitiy after iteration
-        probs[K] = params['Ltot'] / params['Ttot'] / muns['Nm'] * probs['Hist'] / Klast
+        probs[K] = params['Ltot'] / params['Ttot'] * probs['CFm'] / muns['Nm'] * probs['Hist'] / Klast
 
     probs = probs \
         .reset_index() \

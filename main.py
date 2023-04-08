@@ -6,7 +6,6 @@ from src.caching import readCache
 from src.corr_factors import calcCorrFactors
 from src.export import exportResults
 from src.read import readData
-from src.path import wd
 from src.plot import plotLine
 from src.probabilities import determineProbabilities
 from src.choose import chooseMuns
@@ -23,7 +22,7 @@ def launch():
     )
     parser.add_argument('-L', '--letters', default=20000)
     parser.add_argument('-T', '--ttotinit', default=80)
-    parser.add_argument('-K', '--iterations', default='500,5000')
+    parser.add_argument('-K', '--iterations', default='5000,50000')
     parser.add_argument('-p', '--plot-only', action='store_true', default=False)
 
     # parse args
