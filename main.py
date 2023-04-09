@@ -2,6 +2,8 @@
 import argparse
 from typing import List
 
+import numpy as np
+
 from src.caching import readCache
 from src.corr_factors import calcCorrFactors
 from src.export import exportResults
@@ -9,7 +11,7 @@ from src.read import readData
 from src.plot import plotLine
 from src.probabilities import determineProbabilities
 from src.choose import chooseMuns
-from src.groups import getGroups
+from src.groups import defineGroups
 
 
 # the launch function handles command-line parameters
@@ -22,7 +24,8 @@ def launch():
     )
     parser.add_argument('-L', '--letters', default=20000)
     parser.add_argument('-T', '--ttotinit', default=80)
-    parser.add_argument('-K', '--iterations', default='5000,50000')
+    parser.add_argument('-K', '--iterations', default='500,1000')
+    parser.add_argument('-S', '--seed', default=1)
     parser.add_argument('-p', '--plot-only', action='store_true', default=False)
 
     # parse args
@@ -30,11 +33,11 @@ def launch():
     iterations = [int(K) for K in args.iterations.split(',')]
 
     # run
-    run(args.ttotinit, args.letters, iterations, args.plot_only)
+    run(args.ttotinit, args.letters, iterations, args.seed, args.plot_only)
 
 
 # calling 'run' will load the database, generate the statistics, and perform the selection
-def run(Ttot_init: int, Ltot: int, Ks: List[int], plot_only: bool):
+def run(Ttot_init: int, Ltot: int, Ks: List[int], seed: int, plot_only: bool):
     # load municipalities data
     states, muns = readData()
     print(states)
@@ -46,12 +49,15 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], plot_only: bool):
         'Ntot': muns['Nm'].sum(), # total population in Germany
     }
 
+    # get groups and targets
+    muns, groups = defineGroups(muns, params)
+
     if not plot_only:
-        # get groups and targets
-        groups = getGroups(states, muns, params)
+        # set seed
+        np.random.seed(seed)
 
         # determine correction factors
-        corrFactorsMuns = calcCorrFactors(groups, muns, params)
+        corrFactorsMuns = calcCorrFactors(muns, groups, params)
 
         # select municipalities once
         choices = chooseMuns(muns, groups)

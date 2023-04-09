@@ -31,8 +31,7 @@ def determineProbabilities(muns: pd.DataFrame, groups:pd.DataFrame, corrFactorsM
             Kchoose -= Kbatch
 
             # add number of times chosen to histogram
-            add = pd.Series(choices).value_counts()
-            probs.loc[add.index.values, 'Hist'] += add.values
+            probs.loc[choices.index, 'Hist'] += choices['Selected'].values
 
         # add K to total number of times chosen
         Klast = K

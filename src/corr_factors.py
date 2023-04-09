@@ -1,17 +1,24 @@
 import pandas as pd
 
 
-def calcCorrFactors(groups: pd.DataFrame, muns: pd.DataFrame, params: dict):
+def calcCorrFactors(muns: pd.DataFrame, groups: pd.DataFrame, params: dict):
     # calculate correction factors for all groups
-    corrFactorsGroups = groups \
-        .assign(CFm = lambda x: params['Ttot'] / x['Tg'] * x['Ng'] / params['Ntot']) \
-        .filter(['CFm'])
+    corrFactorsGroups = pd.DataFrame(index=groups.index, dtype=float)
+    corrFactorsGroups['CFg'] = params['Ttot'] / groups['Tg'] * groups['Ng'] / params['Ntot']
+
+    # groups with Tg >= Cg
+    groupsToC = groups.loc[(groups['Tg'] >= groups['Cg']) & (groups['Cg'] > 0)].copy()
 
     # assign correction factors to municipalities
-    corrFactorsMuns = muns.filter(['MunName', 'StateID', 'ClassID', 'Nm']) \
+    corrFactorsMuns = muns.filter(['MunName', 'GroupID', 'Nm']) \
         .reset_index() \
-        .merge(corrFactorsGroups, on=['StateID', 'ClassID']) \
+        .merge(corrFactorsGroups, on='GroupID') \
         .sort_values(by='MunID') \
-        .set_index('MunID')
+        .set_index('MunID') \
+        .rename(columns={'CFg': 'CFm'})
+
+    # assign correction factors
+    condMunsToC = muns['GroupID'].isin(groupsToC.index)
+    corrFactorsMuns.loc[condMunsToC, 'CFm'] = muns['Nm'] / params['Ntot'] * params['Ttot']
 
     return corrFactorsMuns
