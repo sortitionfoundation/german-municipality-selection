@@ -24,6 +24,7 @@ def launch():
     parser.add_argument('-L', '--letters', default=20000)
     parser.add_argument('-T', '--ttotinit', default=80)
     parser.add_argument('-K', '--iterations', default='5000,10000')
+    parser.add_argument('-n', '--no-probs', action='store_true', default=False)
     parser.add_argument('-S', '--seed', default=1)
     parser.add_argument('-p', '--plot-only', action='store_true', default=False)
 
@@ -32,11 +33,11 @@ def launch():
     iterations = [int(K) for K in args.iterations.split(',')]
 
     # run
-    run(args.ttotinit, args.letters, iterations, args.seed, args.plot_only)
+    run(args.ttotinit, args.letters, iterations, args.no_probs, args.seed, args.plot_only)
 
 
 # calling 'run' will load the database, generate the statistics, and perform the selection
-def run(Ttot_init: int, Ltot: int, Ks: List[int], seed: int, plot_only: bool):
+def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plot_only: bool):
     # load municipalities data
     states, muns = readData()
     print(states)
@@ -62,7 +63,8 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], seed: int, plot_only: bool):
         exportResults(muns, groups, stats, params)
 
         # determine probability of selection for each municipality
-        probs = determineProbabilities(muns, groups, params, Ks)
+        if not no_probs:
+            probs = determineProbabilities(muns, groups, params, Ks)
     else:
         print('Plotting only -- loading probs from cache')
         probs = readCache('Probs')
@@ -70,7 +72,8 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], seed: int, plot_only: bool):
             raise Exception('Probs cache file could not be found!')
 
     # plot line of probabilities
-    plotLine(probs, params)
+    if not no_probs:
+        plotLine(probs, params)
 
 
 # calling main function
