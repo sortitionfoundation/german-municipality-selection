@@ -3,10 +3,11 @@ import pandas as pd
 from voting import apportionment
 
 from src.path import wd
+from src.read import sizeClasses
 
 
 # export results to spreadsheet
-def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, stats: pd.DataFrame, params: dict):
+def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame, stats: pd.DataFrame, params: dict):
     # list of chosen municipalities (with repetition)
     statsSelected = stats.query("Selected==1")
     munsSelected = muns.loc[statsSelected.index].copy()
@@ -14,16 +15,33 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, stats: pd.DataFrame,
     # add correction factors
     munsSelected.loc[statsSelected.index, 'CFm'] = statsSelected['CFm']
 
+    # assign letters via StLague
+    munsSelected['Letters'] = apportionment.sainte_lague(munsSelected['CFm'].values, params['Ltot'])
+
     # add number of muns selected per group for monitoring purposes
     groupsExport = groups.copy()
     groupsExport['Tg monitor'] = munsSelected.groupby('GroupID').size()
     groupsExport['Tg monitor'] = groupsExport['Tg monitor'].fillna(0).astype(int)
 
-    # stack ClassID in groups for export
-    groupsExport = groupsExport.reset_index().set_index(['StateID', 'ClassID']).unstack('ClassID')
+    # add names of size classes
+    classNameMapping = {
+        ClassID: ClassSpecs['name']
+        for ClassID, ClassSpecs in sizeClasses.items()
+    }
+    munsSelected['ClassName'] = munsSelected['ClassID'].map(classNameMapping)
 
-    # assign letters via StLague
-    munsSelected['Letters'] = apportionment.sainte_lague(munsSelected['CFm'].values, params['Ltot'])
+    # add state names
+    munsSelected = munsSelected.merge(states, on=['StateID'])
+    groupsExport = groupsExport.merge(states, on=['StateID'])
+
+    # stack ClassID in groups for export
+    groupsExport = groupsExport.set_index(['StateID', 'ClassID']).unstack('ClassID')
+
+    # sort municipalities
+    munsSelected = munsSelected.sort_values(by=['StateID', 'Nm'])
+
+    # convert shares to percent
+    groupsExport['Sg'] *= 100.0
 
     # export to spreadsheet
     with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:

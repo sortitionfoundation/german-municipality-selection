@@ -10,9 +10,18 @@ patchRaw = wd / 'input' / '31122021_Auszug_GV.xlsx'
 
 # definition of size classes
 sizeClasses = {
-    1: lambda muns: muns['Nm'] < 20000,
-    2: lambda muns: (muns['Nm'] >= 20000) & (muns['Nm'] < 100000),
-    3: lambda muns: muns['Nm'] >= 100000,
+    1: {
+        'name': 'Small (<20.000)',
+        'cond': lambda muns: muns['Nm'] < 20000,
+    },
+    2: {
+        'name': 'Medium (≥20.000; <100.000)',
+        'cond': lambda muns: (muns['Nm'] >= 20000) & (muns['Nm'] < 100000),
+    },
+    3: {
+        'name': 'Large (≥100.000)',
+        'cond': lambda muns: muns['Nm'] >= 100000,
+    },
 }
 
 
@@ -85,8 +94,8 @@ def __readMuns():
     # add size classes
     muns.insert(3, 'ClassID', 0)
     muns = muns.astype({'ClassID': int})
-    for gk, cond in sizeClasses.items():
-        muns.loc[cond(muns), 'ClassID'] = gk
+    for ClassID, ClassSpecs in sizeClasses.items():
+        muns.loc[ClassSpecs['cond'](muns), 'ClassID'] = ClassID
 
     # check all municiaplities were assigned a category
     assert (muns.query("ClassID==0").empty)

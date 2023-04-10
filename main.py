@@ -60,7 +60,7 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plo
         stats = selectMuns(muns, groups, params)
 
         # export results (targets, selection, and stats) to a spreadsheet
-        exportResults(muns, groups, stats, params)
+        exportResults(muns, groups, states, stats, params)
 
         # determine probability of selection for each municipality
         if not no_probs:
