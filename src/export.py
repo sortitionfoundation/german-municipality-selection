@@ -6,9 +6,13 @@ from src.path import wd
 
 
 # export results to spreadsheet
-def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, corrFactorsMuns: pd.DataFrame, choices: pd.DataFrame, params: dict):
+def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, stats: pd.DataFrame, params: dict):
     # list of chosen municipalities (with repetition)
-    munsSelected = muns.loc[choices.query("Selected==1").index].copy()
+    statsSelected = stats.query("Selected==1")
+    munsSelected = muns.loc[statsSelected.index].copy()
+
+    # add correction factors
+    munsSelected.loc[statsSelected.index, 'CFm'] = statsSelected['CFm']
 
     # add number of muns selected per group for monitoring purposes
     groupsExport = groups.copy()
@@ -19,7 +23,7 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, corrFactorsMuns: pd.
     groupsExport = groupsExport.reset_index().set_index(['StateID', 'ClassID']).unstack('ClassID')
 
     # assign letters via StLague
-    munsSelected['Letters'] = apportionment.sainte_lague(corrFactorsMuns.loc[munsSelected.index, 'CFm'].values, params['Ltot'])
+    munsSelected['Letters'] = apportionment.sainte_lague(munsSelected['CFm'].values, params['Ltot'])
 
     # export to spreadsheet
     with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:

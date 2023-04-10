@@ -5,12 +5,11 @@ from typing import List
 import numpy as np
 
 from src.caching import readCache
-from src.corr_factors import calcCorrFactors
 from src.export import exportResults
 from src.read import readData
 from src.plot import plotLine
 from src.probabilities import determineProbabilities
-from src.choose import chooseMuns
+from src.selection import selectMuns
 from src.groups import defineGroups
 
 
@@ -24,7 +23,7 @@ def launch():
     )
     parser.add_argument('-L', '--letters', default=20000)
     parser.add_argument('-T', '--ttotinit', default=80)
-    parser.add_argument('-K', '--iterations', default='500,1000')
+    parser.add_argument('-K', '--iterations', default='5000,10000')
     parser.add_argument('-S', '--seed', default=1)
     parser.add_argument('-p', '--plot-only', action='store_true', default=False)
 
@@ -56,17 +55,14 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], seed: int, plot_only: bool):
         # set seed
         np.random.seed(seed)
 
-        # determine correction factors
-        corrFactorsMuns = calcCorrFactors(muns, groups, params)
-
         # select municipalities once
-        choices = chooseMuns(muns, groups)
+        stats = selectMuns(muns, groups, params)
 
         # export results (targets, selection, and stats) to a spreadsheet
-        exportResults(muns, groups, corrFactorsMuns, choices, params)
+        exportResults(muns, groups, stats, params)
 
         # determine probability of selection for each municipality
-        probs = determineProbabilities(muns, groups, corrFactorsMuns, params, Ks)
+        probs = determineProbabilities(muns, groups, params, Ks)
     else:
         print('Plotting only -- loading probs from cache')
         probs = readCache('Probs')
