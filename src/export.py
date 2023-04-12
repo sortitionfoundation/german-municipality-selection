@@ -23,6 +23,10 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
     groupsExport['Tg monitor'] = munsSelected.groupby('GroupID').size()
     groupsExport['Tg monitor'] = groupsExport['Tg monitor'].fillna(0).astype(int)
 
+    # add number of letters in each group
+    groupsExport['Letters'] = munsSelected.groupby('GroupID')['Letters'].sum()
+    groupsExport['Letters rel'] = groupsExport['Letters'] / params['Ltot'] * 100.0
+
     # add names of size classes
     classNameMapping = {
         ClassID: ClassSpecs['name']
