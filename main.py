@@ -11,6 +11,7 @@ from src.plot import plotLine
 from src.probabilities import determineProbabilities
 from src.selection import selectMuns
 from src.groups import defineGroups
+from src.seed import setRandomSeed
 
 
 # the launch function handles command-line parameters
@@ -25,7 +26,7 @@ def launch():
     parser.add_argument('-T', '--ttotinit', default=80)
     parser.add_argument('-K', '--iterations', default='5000,10000')
     parser.add_argument('-n', '--no-probs', action='store_true', default=False)
-    parser.add_argument('-S', '--seed', default=1)
+    parser.add_argument('-S', '--seed', default=None)
     parser.add_argument('-p', '--plot-only', action='store_true', default=False)
 
     # parse args
@@ -40,7 +41,6 @@ def launch():
 def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plot_only: bool):
     # load municipalities data
     states, muns = readData()
-    print(states)
 
     # initialise key parameters
     params = {
@@ -54,7 +54,7 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plo
 
     if not plot_only:
         # set seed
-        np.random.seed(seed)
+        setRandomSeed(seed)
 
         # select municipalities once
         stats = selectMuns(muns, groups, params)
