@@ -42,7 +42,7 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
     groupsExport = groupsExport.set_index(['StateID', 'ClassID']).unstack('ClassID')
 
     # sort municipalities
-    munsSelected = munsSelected.sort_values(by=['StateID', 'Nm'])
+    munsSelected = munsSelected.sort_values(by=['StateID', 'Nm']).reset_index(drop=True)
 
     # convert shares to percent
     groupsExport['Sg'] *= 100.0
