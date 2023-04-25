@@ -1,3 +1,5 @@
+from dateutil import parser
+
 import json
 from requests import request
 import numpy as np
@@ -9,10 +11,12 @@ def setRandomSeed(seed: int):
         return
 
     # set timestamp
-    t = 1682431200000
+    timeString = "25 Apr 2023 16:00:00.000 CEST"
+    timeStamp = int(parser.parse(timeString).timestamp()) * 1000
+    print(f"Timestamp: {timeStamp}")
 
     # request beacon at timestamp
-    r = request(method="GET", url=f"https://beacon.nist.gov/beacon/2.0/pulse/time/{t}")
+    r = request(method="GET", url=f"https://beacon.nist.gov/beacon/2.0/pulse/time/{timeStamp}")
 
     # load json data
     jsonData = json.loads(r.text)
