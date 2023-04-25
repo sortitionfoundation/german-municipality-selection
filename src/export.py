@@ -48,8 +48,8 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
     groupsExport['Sg'] *= 100.0
 
     # export to spreadsheet
-    # with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:
-    #     groupsExport.to_excel(writer, sheet_name='Targets')
-    #     munsSelected.to_excel(writer, sheet_name='Selected')
+    with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:
+        groupsExport.to_excel(writer, sheet_name='Targets')
+        munsSelected.to_excel(writer, sheet_name='Selected')
 
     print(munsSelected.head(15))
