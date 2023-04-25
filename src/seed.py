@@ -6,6 +6,7 @@ import numpy as np
 def setRandomSeed(seed: int):
     if seed is not None:
         np.random.seed(seed)
+        return
 
     # set timestamp
     t = 1682431200000
