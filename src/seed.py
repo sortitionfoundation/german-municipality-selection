@@ -8,7 +8,7 @@ def setRandomSeed(seed: int):
         np.random.seed(seed)
 
     # set timestamp
-    t = 1682362800000
+    t = 1682431200000
 
     # request beacon at timestamp
     r = request(method="GET", url=f"https://beacon.nist.gov/beacon/2.0/pulse/time/{t}")
