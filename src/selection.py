@@ -9,6 +9,9 @@ def selectMuns(muns: pd.DataFrame, groups: pd.DataFrame, params: dict, K: int = 
     stats['Selected'] = 0
     stats['Certainty'] = False
 
+    # create dataframe for correction factors for all groups
+    corrFactorsGroups = pd.DataFrame(index=groups.index, dtype=float)
+
     # selection method
     pps_sys_sel = SampleSelection(
         method=SelectMethod.pps_sys,
@@ -38,36 +41,41 @@ def selectMuns(muns: pd.DataFrame, groups: pd.DataFrame, params: dict, K: int = 
         Cg = groups.loc[GroupID, 'Cg']
 
         if Tg < Cg:
+            thisMunsSampling = thisMuns
+            thisMunsCertainty = None
+
             for k in range(K):
                 # run pps selection algorithm
-                pps_sample = pps_sys_sel.select(
-                    samp_unit=thisMuns.index,
-                    samp_size=int(Tg),
-                    stratum=None,
-                    mos=thisMuns['Nm'].values,
-                    to_dataframe=True,
-                    sample_only=False,
-                )
+                while True:
+                    samp_size = int(Tg) if thisMunsCertainty is None else int(Tg) - len(thisMunsCertainty)
+                    pps_sample = pps_sys_sel.select(
+                        samp_unit=thisMunsSampling.index,
+                        samp_size=samp_size,
+                        stratum=None,
+                        mos=thisMunsSampling['Nm'].values,
+                        to_dataframe=True,
+                        sample_only=False,
+                    )
 
-                # choose municipalities randomly weighted by population
-                # choice = pd.Series(pps.ppss(robjects.IntVector(thisMuns['Nm']), Tg)).astype(int) - 1
-                # choiceIndices = thisMuns.iloc[choice.values.tolist()].index.to_list()
+                    thisMunsCertaintyNew = thisMunsSampling.loc[pps_sample.query('_probs>=1.0')['_samp_unit']]
 
-                # add number of times selected
+                    if thisMunsCertaintyNew.empty:
+                        break
+
+                    thisMunsCertainty = thisMunsCertaintyNew if thisMunsCertainty is None else pd.concat([thisMunsCertainty, thisMunsCertaintyNew])
+                    thisMunsSampling = thisMunsSampling[~thisMunsSampling.index.isin(thisMunsCertainty.index)]
+
+                # add number of times selected and correction factors for this group
                 stats.loc[pps_sample['_samp_unit'], 'Selected'] += pps_sample['_sample'].astype(int).values
+                corrFactorsGroups.loc[GroupID, 'CFg'] = thisMunsSampling['Nm'].sum() / params['Ntot'] / samp_size * params['Ttot']
 
-                # add to certainty
-                stats.loc[pps_sample.query('_probs>1.0')['_samp_unit'], 'Certainty'] = True
+            # add certainty information
+            if thisMunsCertainty is not None:
+                stats.loc[thisMunsCertainty.index, 'Certainty'] = True
         else:
             stats.loc[thisMuns.index, 'Certainty'] = True
 
-    stats.loc[stats['Certainty'], 'Selected'] = K
-
-    # calculate correction factors for all groups
-    corrFactorsGroups = pd.DataFrame(index=groups.index, dtype=float)
-    corrFactorsGroups['CFg'] = params['Ttot'] / groups['Tg'] * groups['Ng'] / params['Ntot']
-
-    # assign correction factors for non-certainty
+    # assign correction factors from groups to muns
     stats = stats \
         .reset_index() \
         .merge(corrFactorsGroups, on='GroupID') \
@@ -75,7 +83,8 @@ def selectMuns(muns: pd.DataFrame, groups: pd.DataFrame, params: dict, K: int = 
         .set_index('MunID') \
         .rename(columns={'CFg': 'CFm'})
 
-    # assign correction factors for certainty
+    # assign correction factors and number of samplings for certainty muns
+    stats.loc[stats['Certainty'], 'Selected'] = K
     stats.loc[stats['Certainty'], 'CFm'] = muns['Nm'] / params['Ntot'] * params['Ttot']
 
     return stats
