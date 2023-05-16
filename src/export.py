@@ -41,6 +41,7 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
 
     # add state names
     munsSelected = munsSelected.merge(states, on=['StateID'])
+    munsReplacements = munsReplacements.merge(states, on=['StateID'])
     groupsExport = groupsExport.merge(states, on=['StateID'])
 
     # stack ClassID in groups for export
