@@ -7,10 +7,15 @@ from src.read import sizeClasses
 
 
 # export results to spreadsheet
-def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame, stats: pd.DataFrame, params: dict):
-    # list of chosen municipalities (with repetition)
+def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame, stats: pd.DataFrame,
+                  statsReplacements: pd.DataFrame, params: dict):
+    # list of chosen municipalities
     statsSelected = stats.query("Selected==1")
     munsSelected = muns.loc[statsSelected.index].copy()
+
+    # list of municipality replacements
+    munsReplacements = muns.loc[statsReplacements.query("Selected==1").index].copy() \
+        .sort_values(by=['StateID', 'Nm']).reset_index(drop=True)
 
     # add correction factors
     munsSelected.loc[statsSelected.index, 'CFm'] = statsSelected['CFm']
@@ -51,5 +56,6 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
     with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:
         groupsExport.to_excel(writer, sheet_name='Targets')
         munsSelected.to_excel(writer, sheet_name='Selected')
+        munsReplacements.to_excel(writer, sheet_name='Replacements')
 
     print(munsSelected.head(15))

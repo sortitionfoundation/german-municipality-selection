@@ -2,13 +2,12 @@
 import argparse
 from typing import List
 
-import numpy as np
-
 from src.caching import readCache
 from src.export import exportResults
 from src.read import readData
 from src.plot import plotLine
 from src.probabilities import determineProbabilities
+from src.replacements import selectReplacements
 from src.selection import selectMuns
 from src.groups import defineGroups
 from src.seed import setRandomSeed
@@ -59,8 +58,11 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plo
         # select municipalities once
         stats = selectMuns(muns, groups, params)
 
+        # replacements
+        statsReplacements = selectReplacements(muns, stats)
+
         # export results (targets, selection, and stats) to a spreadsheet
-        exportResults(muns, groups, states, stats, params)
+        exportResults(muns, groups, states, stats, statsReplacements, params)
 
         # determine probability of selection for each municipality
         if not no_probs:
