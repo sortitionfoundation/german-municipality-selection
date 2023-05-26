@@ -57,12 +57,21 @@ def run(Ttot_init: int, Ltot: int, Ks: List[int], no_probs: bool, seed: int, plo
 
         # select municipalities once
         stats = selectMuns(muns, groups, params)
+        
+        # determine municipalities that can still be selected (those that have not been selected yet)
+        munsAvailable = muns[~muns.index.isin(stats.query('Selected==1').index)]
 
-        # replacements
-        statsReplacements = selectReplacements(muns, stats)
+        # replacements 1
+        statsReplacements1 = selectReplacements(munsAvailable)
+
+        # determine municipalities that can still be selected (those that have not been selected yet)
+        munsAvailable = muns[~(muns.index.isin(stats.query('Selected==1').index) | muns.index.isin(statsReplacements1.query('Selected==1').index))]
+
+        # replacements 2
+        statsReplacements2 = selectReplacements(munsAvailable)
 
         # export results (targets, selection, and stats) to a spreadsheet
-        exportResults(muns, groups, states, stats, statsReplacements, params)
+        exportResults(muns, groups, states, stats, statsReplacements1, statsReplacements2, params)
 
         # determine probability of selection for each municipality
         if not no_probs:

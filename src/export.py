@@ -1,5 +1,5 @@
 import pandas as pd
-
+import plotly.express as px
 from voting import apportionment
 
 from src.path import wd
@@ -8,13 +8,15 @@ from src.read import sizeClasses
 
 # export results to spreadsheet
 def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame, stats: pd.DataFrame,
-                  statsReplacements: pd.DataFrame, params: dict):
+                  statsReplacements1: pd.DataFrame, statsReplacements2: pd.DataFrame, params: dict):
     # list of chosen municipalities
     statsSelected = stats.query("Selected==1")
     munsSelected = muns.loc[statsSelected.index].copy()
 
     # list of municipality replacements
-    munsReplacements = muns.loc[statsReplacements.query("Selected==1").index].copy() \
+    munsReplacements1 = muns.loc[statsReplacements1.query("Selected==1").index].copy() \
+        .sort_values(by=['StateID', 'Nm']).reset_index(drop=True)
+    munsReplacements2 = muns.loc[statsReplacements2.query("Selected==1").index].copy() \
         .sort_values(by=['StateID', 'Nm']).reset_index(drop=True)
 
     # add correction factors
@@ -41,7 +43,8 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
 
     # add state names
     munsSelected = munsSelected.merge(states, on=['StateID'])
-    munsReplacements = munsReplacements.merge(states, on=['StateID'])
+    munsReplacements1 = munsReplacements1.merge(states, on=['StateID'])
+    munsReplacements2 = munsReplacements2.merge(states, on=['StateID'])
     groupsExport = groupsExport.merge(states, on=['StateID'])
 
     # stack ClassID in groups for export
@@ -53,10 +56,16 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
     # convert shares to percent
     groupsExport['Sg'] *= 100.0
 
+    # start index at 1, not 0
+    munsSelected.index += 1
+    munsReplacements1.index += 1
+    munsReplacements2.index += 1
+
     # export to spreadsheet
     with pd.ExcelWriter(wd / 'output' / 'results.xlsx') as writer:
         groupsExport.to_excel(writer, sheet_name='Targets')
         munsSelected.to_excel(writer, sheet_name='Selected')
-        munsReplacements.to_excel(writer, sheet_name='Replacements')
+        munsReplacements1.to_excel(writer, sheet_name='Replacements 1')
+        munsReplacements2.to_excel(writer, sheet_name='Replacements 2')
 
     print(munsSelected.head(15))

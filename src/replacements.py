@@ -3,13 +3,11 @@ from samplics import SelectMethod
 from samplics.sampling import SampleSelection
 
 
-def selectReplacements(muns: pd.DataFrame, stats: pd.DataFrame):
-    # determine municipalities that can still be selected (those that have not been selected yet)
-    munsAvailable = muns[~muns.index.isin(stats.query('Selected==1').index)]
-
-    # create new stats table
-    statsReplacements = stats.copy()
-    statsReplacements['Selected'] = 0
+def selectReplacements(muns: pd.DataFrame):
+    # initialise stats dataframe
+    stats = muns[['GroupID']].copy()
+    stats['Selected'] = 0
+    stats['Certainty'] = False
 
     # selection method
     pps_sys_sel = SampleSelection(
@@ -19,13 +17,13 @@ def selectReplacements(muns: pd.DataFrame, stats: pd.DataFrame):
     )
 
     # select one municipality for every group
-    for GroupID in munsAvailable['GroupID'].unique():
-        thisMunsAvailable = munsAvailable.query(f"GroupID=={GroupID}")
+    for GroupID in muns['GroupID'].unique():
+        thisMunsAvailable = muns.query(f"GroupID=={GroupID}")
 
         if thisMunsAvailable.empty:
             continue
         elif len(thisMunsAvailable) == 1:
-            statsReplacements.loc[thisMunsAvailable.index, 'Selected'] = 1
+            stats.loc[thisMunsAvailable.index, 'Selected'] = 1
             continue
 
         samp_size = 1
@@ -38,6 +36,6 @@ def selectReplacements(muns: pd.DataFrame, stats: pd.DataFrame):
             sample_only=False,
         )
 
-        statsReplacements.loc[pps_sample['_samp_unit'], 'Selected'] += pps_sample['_sample'].astype(int).values
+        stats.loc[pps_sample['_samp_unit'], 'Selected'] += pps_sample['_sample'].astype(int).values
 
-    return statsReplacements
+    return stats
