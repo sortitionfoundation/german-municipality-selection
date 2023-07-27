@@ -1,5 +1,4 @@
 import pandas as pd
-import plotly.express as px
 from voting import apportionment
 
 from src.path import wd
@@ -67,5 +66,3 @@ def exportResults(muns: pd.DataFrame, groups: pd.DataFrame, states: pd.DataFrame
         munsSelected.to_excel(writer, sheet_name='Selected')
         munsReplacements1.to_excel(writer, sheet_name='Replacements 1')
         munsReplacements2.to_excel(writer, sheet_name='Replacements 2')
-
-    print(munsSelected.head(15))

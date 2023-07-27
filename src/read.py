@@ -83,7 +83,7 @@ def __readMuns():
     muns = muns[['MunName', 'StateID', 'Nm', 'Urbanisation', 'LONG', 'LAT']]
 
     # update type of state column
-    muns = muns.astype({'StateID': int, 'Nm': int})
+    muns = muns.astype({'StateID': int, 'Nm': int, 'LAT': float, 'LONG': float})
 
     # drop municipalities with zero population
     muns = muns.query(f"Nm!=0")
